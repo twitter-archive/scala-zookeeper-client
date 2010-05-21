@@ -26,7 +26,7 @@ object LoadTest extends LoggingLoadTest {
   }
 
   def parallelClientTest {
-    runInParallelNTimes(GETS) {
+    runInActorNTimes(GETS) {
       zkClient.get("/")
     }
   }
