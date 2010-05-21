@@ -7,6 +7,7 @@ dist
 *.ipr
 *.iws
 *.swp
+*~
 lib_managed
 project/boot
 .DS_Store
