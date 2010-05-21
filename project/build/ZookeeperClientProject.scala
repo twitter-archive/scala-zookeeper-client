@@ -1,19 +1,16 @@
 import sbt._
 import Process._
+import com.twitter.sbt.StandardProject
 
 
-class ZookeeperClientProject(info: ProjectInfo) extends DefaultProject(info) {
+class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
+  //override def dependencyPath = "libs"
   // Maven repositories
-  val scalaToolsTesting = "testing.scala-tools.org" at "http://scala-tools.org/repo-releases/"
-  val powerMock = "powermock-api" at "http://powermock.googlecode.com/svn/repo/"
   val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
-  val scalaToolsReleases = "scala-tools.org" at "http://scala-tools.org/repo-releases/"
-  val reucon = "reucon" at "http://maven.reucon.com/public/"
-  val lagDotNet = "lag.net" at "http://www.lag.net/repo/"
-  val oauthDotNet = "oauth.net" at "http://oauth.googlecode.com/svn/code/maven"
-  val javaDotNet = "download.java.net" at "http://download.java.net/maven/2/"
   val jBoss = "jboss-repo" at "http://repository.jboss.org/maven2/"
   val nest = "nest" at "http://www.lag.net/nest/"
+  val apache = "apache" at "http://people.apache.org/repo/m2-ibiblio-rsync-repository/"
+  val local = "local" at "file:///%s/libs/".format(System.getProperty("user.dir"))
 
   // dependencies
   val specs = "org.scala-tools.testing" % "specs" % "1.6.2"
@@ -33,4 +30,5 @@ class ZookeeperClientProject(info: ProjectInfo) extends DefaultProject(info) {
   val objenesis = "org.objenesis" % "objenesis" % "1.1"
   val javautils = "org.scala-tools" % "javautils" % "2.7.4-0.1"
   val ostrich = "com.twitter" % "ostrich" % "1.1.6"
+  val zookeeper = "org.apache" % "zookeeper" % "3.3.1"
 }
