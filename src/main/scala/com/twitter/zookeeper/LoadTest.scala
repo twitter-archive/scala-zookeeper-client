@@ -1,6 +1,7 @@
-package com.twitter.zookeeper.client.loadtest
+package com.twitter.zookeeper.loadtest
 
 import java.io.File
+import org.apache.zookeeper.WatchedEvent
 import com.twitter.jackhammer.LoggingLoadTest
 import net.lag.configgy.{Config, Configgy}
 import net.lag.logging.Logger
@@ -16,8 +17,7 @@ object LoadTest extends LoggingLoadTest {
   //val CONCURRENCY = config.getInt("concurrency", 4)
   val HOSTLIST = config.getString("hostlist", "localhost:2181")
 
-  val watcher = new FakeWatcher
-  val zkClient = new ZookeeperClient(watcher, HOSTLIST)
+  val zkClient = new ZooKeeperClient(HOSTLIST, ZKWatch((watch : WatchedEvent) => {}))
 
   def singleClientTest {
     runWithTimingNTimes(GETS) {

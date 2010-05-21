@@ -52,6 +52,8 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
     zk.getChildren(makeNodePath(path), false)
   }
 
+  def close() = zk.close
+
   def isAlive: Boolean = {
     // If you can get the root, then we're alive.
     val result: Stat = zk.exists("/", false) // do not watch

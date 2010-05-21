@@ -1,4 +1,4 @@
-package com.twitter.zookeeper.client
+package com.twitter.zookeeper
 
 import java.net.{Socket, SocketException}
 import org.scala_tools.javautils.Imports._
@@ -14,8 +14,8 @@ class ZookeeperClientSpec extends Specification {
     val zookeeperHost = "localhost"
     val zookeeperPort = 2181
 
-    val watcher = new FakeWatcher
-    val zkClient = new ZookeeperClient(watcher, "%s:%s".format(zookeeperHost, zookeeperPort))
+    val watcher = ZKWatch((a: WatchedEvent) => {})
+    val zkClient = new ZooKeeperClient("%s:%s".format(zookeeperHost, zookeeperPort), watcher)
 
     doBefore {
       // we need to be sure that a ZooKeeper server is running in order to test
@@ -50,11 +50,9 @@ class ZookeeperClientSpec extends Specification {
     "create a node at a specified path" in {
       val data: Array[Byte] = Array(0x63)
       val id = new Id("world", "anyone")
-      val acl = new ACL(0, id)
-      val aclList = List[ACL](acl).asJava
       val createMode = EPHEMERAL
 
-      zkClient.create("/foo", data, aclList, createMode) mustEqual "/foo"
+      zkClient.create("/foo", data, createMode) mustEqual "/foo"
       zkClient.delete("/foo")
     }
   }
