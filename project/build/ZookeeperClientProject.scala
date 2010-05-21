@@ -1,9 +1,9 @@
 import sbt._
 import Process._
-import com.twitter.sbt.StandardProject
+import com.twitter.sbt.{StandardProject, SubversionRepository}
 
 
-class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
+class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) with SubversionRepository {
   //override def dependencyPath = "libs"
   // Maven repositories
   val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
