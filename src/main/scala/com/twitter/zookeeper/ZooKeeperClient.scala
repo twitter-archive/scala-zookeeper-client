@@ -21,6 +21,17 @@ object ZKWatch {
 class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, watcher: ZKWatch) {
   private val log = Logger.get
 
+  /**
+   * Given a string representing a path, return each subpath
+   * Ex. subPaths("/a/b/c", "/") == ["/a", "/a/b", "/a/b/c"]
+   */
+  private def subPaths(path : String, sep : Char) = {
+    val l = List.fromString(path, sep)
+    val paths = l.foldLeft[List[String]](Nil){(xs, x) =>
+      (xs.firstOption.getOrElse("") + sep.toString + x)::xs}
+    paths.reverse
+  }
+
   def this(config: ConfigMap, watcher: ZKWatch) = {
     this(config.getString("servers").get, // Must be set. No sensible default.
          config.getInt("session-timeout",  3000),
@@ -55,7 +66,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
    * ZooKeeper version of mkdir -p
    */
   def createPath(path: String) {
-    for (path <- Utils.subPaths(makeNodePath(path), '/')) {
+    for (path <- subPaths(makeNodePath(path), '/')) {
       try {
         log.debug("Creating path in createPath: %s", path)
         zk.create(path, null, Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT)
