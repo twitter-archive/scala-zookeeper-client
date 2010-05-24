@@ -4,13 +4,15 @@ import com.twitter.sbt.{StandardProject, SubversionRepository}
 
 
 class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) with SubversionRepository {
+  // Local libraries got into the libs/ directory
+  val local = Resolver.file("libs", new java.io.File("libs")) transactional()
+
   //override def dependencyPath = "libs"
   // Maven repositories
   val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
   val jBoss = "jboss-repo" at "http://repository.jboss.org/maven2/"
   val nest = "nest" at "http://www.lag.net/nest/"
   val apache = "apache" at "http://people.apache.org/repo/m2-ibiblio-rsync-repository/"
-  val local = "local" at "file:///%s/libs/".format(System.getProperty("user.dir"))
 
   // dependencies
   val specs = "org.scala-tools.testing" % "specs" % "1.6.2"
