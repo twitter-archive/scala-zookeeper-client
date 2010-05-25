@@ -7,19 +7,21 @@ import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id}
 import org.specs._
-
+import net.lag.configgy.Configgy
 
 class ZookeeperClientSpec extends Specification {
   "ZookeeperClient" should {
-    val zookeeperHost = "localhost"
-    val zookeeperPort = 2181
+    Configgy.configure("src/main/resources/config.conf")
 
     val watcher = ZKWatch((a: WatchedEvent) => {})
-    val zkClient = new ZooKeeperClient("%s:%s".format(zookeeperHost, zookeeperPort), watcher)
+    val configMap = Configgy.config
+    val zkClient = new ZooKeeperClient(configMap, watcher)
 
     doBefore {
       // we need to be sure that a ZooKeeper server is running in order to test
-      new Socket(zookeeperHost, zookeeperPort) must throwA[SocketException]
+      val hostlist = configMap.getString("zookeeper-client.hostlist", "localhost:2181")
+      val socketPort = hostlist.split(":")
+      new Socket(socketPort(0), socketPort(1).toInt) must throwA[SocketException]
     }
 
     doLast {
