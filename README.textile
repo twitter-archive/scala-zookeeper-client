@@ -14,6 +14,9 @@ h2. Authors
 
 * "Alex Payne":http://github.com/al3x
 * "Matt Knox":http://github.com/mattknox
+* "Steve Jenson":http://github.com/stevej
+* "John Corwin":http://github.com/jcorwin
+* "Ian Ownbey":http://github.com/imownbey
 
 h2. License
 
