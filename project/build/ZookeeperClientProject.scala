@@ -3,7 +3,7 @@ import Process._
 import com.twitter.sbt.{StandardProject, SubversionRepository}
 
 
-class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) with SubversionRepository {
+class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
   // Maven repositories
   val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
   val jBoss = "jboss-repo" at "http://repository.jboss.org/maven2/"
