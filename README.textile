@@ -17,6 +17,7 @@ h2. Authors
 * "Steve Jenson":http://github.com/stevej
 * "John Corwin":http://github.com/jcorwin
 * "Ian Ownbey":http://github.com/imownbey
+* "Ryan King":http://github.com/ryanking
 
 h2. License
 
