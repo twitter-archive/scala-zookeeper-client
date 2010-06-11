@@ -91,10 +91,11 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
    * new data value as a byte array. If the node is deleted, onDataChanged will be called with
    * None and will track the node's re-creation with an existence watch.
    */
-  def watchNode(path : String, onDataChanged : Option[Array[Byte]] => Unit) {
+  def watchNode(node : String, onDataChanged : Option[Array[Byte]] => Unit) {
+    val path = makeNodePath(node)
     def updateData {
       try {
-        onDataChanged(Some(zk.getData(makeNodePath(path), dataGetter, null)))
+        onDataChanged(Some(zk.getData(path, dataGetter, null)))
       } catch {
         case e:KeeperException => {
           log.warning("Failed to read node %s: %s", path, e)
@@ -104,7 +105,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
     }
     def deletedData {
       onDataChanged(None)
-      if (zk.exists(makeNodePath(path), dataGetter) != null) {
+      if (zk.exists(path, dataGetter) != null) {
         // Node was re-created by the time we called zk.exist
         updateData
       }
@@ -126,11 +127,22 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
    * re-watches the node's children.
    */
   def watchChildren(node : String, updateChildren : Seq[String] => Unit) {
-    val children = zk.getChildren(node,
-                                  ZKWatch {event => {
-                                    if (event.getType == EventType.NodeChildrenChanged)
-                                      watchChildren(node, updateChildren)}})
-    updateChildren(children)
+    val path = makeNodePath(node)
+    val childWatcher : ZKWatch =
+      ZKWatch {event =>
+        if (event.getType == EventType.NodeChildrenChanged ||
+            event.getType == EventType.NodeCreated)
+          watchChildren(node, updateChildren)}
+    try {
+      val children = zk.getChildren(path, childWatcher)
+      updateChildren(children)
+    } catch {
+      case e:KeeperException => {
+        log.warning("Failed to read node %s: %s", path, e)
+        updateChildren(List())
+        zk.exists(path, childWatcher)
+      }
+    }
   }
 
   /**
@@ -152,60 +164,33 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
 
   private def watchChildrenWithData[T](node : String, watchMap: mutable.Map[String, T],
                                        deserialize: Array[Byte] => T, notifier: Option[String => Unit]) {
-    val path = makeNodePath(node)
-    def parentWatcher : ZKWatch = ZKWatch {
-      event => if (event.getType == EventType.NodeCreated) {
-        watchChildrenWithData(node, watchMap, deserialize, notifier)
+    def nodeChanged(child : String)(childData : Option[Array[Byte]]) {
+      childData match {
+        case Some(data) => {
+          watchMap.synchronized {
+            watchMap(child) = deserialize(data)
+          }
+          notifier.map(f => f(child))
+        }
+        case None => {
+          watchMap.synchronized {
+            watchMap -= child
+          }
+          notifier.map(f => f(child))
+        }
       }
     }
 
-    // Calls deserialize on the data and recursively calls itself when a child node is modified.
-    def dataGetter(child: String): ZKWatch = ZKWatch { event =>
-      if (event.getType == EventType.NodeDataChanged || event.getType == EventType.NodeCreated) {
-        val data: Array[Byte] = zk.getData("%s/%s".format(node, child), dataGetter(child), null)
-        val deserialized = deserialize(data)
-        log.debug("Node updated: (%s -> %s)", child, deserialized)
-        watchMap.synchronized {
-          watchMap(child) = deserialized
-        }
-        notifier.map(f => f(child))
-      } else if (event.getType == EventType.NodeDeleted) {
-        log.debug("Node deleted: %s", child)
-        watchMap.synchronized {
-          watchMap -= child
-        }
-        notifier.map(f => f(child))
-      }
-    }
-
-    val children: Seq[String] = try {
-      zk.getChildren(path,
-                     ZKWatch { event => {
-                       if (event.getType == EventType.NodeChildrenChanged)
-                         watchChildrenWithData(node, watchMap, deserialize, notifier)}})
-    } catch {
-      case e:KeeperException => {
-        log.warning("Failed to read node %s: %s", path, e)
-        if (zk.exists(path, parentWatcher) != null) {
-          watchChildrenWithData(node, watchMap, deserialize, notifier)
-        }
-        List()
-      }
-    }
-
-    // For each child that doesn't exist in the watchMap, setup a watcher and
-    // add it to the watch map.
-    for (child <- children if !watchMap.contains(child)) {
-      val childPath = "%s/%s".format(path, child)
-      log.debug("Getting zookeeper data for: %s".format(childPath))
-      val data = zk.getData(childPath, dataGetter(child), null)
-      val deserialized = deserialize(data)
-
-      log.debug("Node found: (%s -> %s)", child, deserialized)
+    def parentWatcher(children : Seq[String]) {
+      val childrenSet = Set(children : _*)
+      // see which children were added
       watchMap.synchronized {
-        watchMap(child) = deserialized
+        for (child <- childrenSet if !watchMap.contains(child)) {
+          watchNode("%s/%s".format(node, child), nodeChanged(child))
+        }
       }
-      notifier.map(f => f(child))
     }
+
+    watchChildren(node, parentWatcher)
   }
 }
