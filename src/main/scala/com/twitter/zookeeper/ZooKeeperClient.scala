@@ -18,7 +18,7 @@ object ZKWatch {
   def apply(watch : WatchedEvent => Unit) = { new ZKWatch(watch) }
 }
 
-class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, watcher: ZKWatch) {
+class ZooKeeperClient(zk : ZooKeeper, basePath : String) {
   private val log = Logger.get
 
   /**
@@ -32,19 +32,18 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
     paths.reverse
   }
 
+  def this(servers: String, sessionTimeout: Int, basePath: String, watcher: ZKWatch) =
+    this(new ZooKeeper(servers, sessionTimeout, watcher), basePath)
+
   def this(config: ConfigMap, watcher: ZKWatch) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
-         config.getInt("zookeeper-client.session-timeout",  3000),
+         config.getInt("zookeeper-client.session-timeout", 3000),
          config.getString("base-path", ""),
          watcher)
   }
 
   def this(servers: String, watcher: ZKWatch) =
     this(servers, 3000, "", watcher)
-
-  lazy val zk = new ZooKeeper(servers, sessionTimeout, watcher)
-
-  private var connected = true
 
   private def makeNodePath(path : String) = "%s/%s".format(basePath, path).replaceAll("//", "/")
 
