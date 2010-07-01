@@ -7,8 +7,10 @@ import org.apache.zookeeper.{CreateMode, KeeperException, Watcher, WatchedEvent,
 import org.apache.zookeeper.data.{ACL, Stat, Id}
 import org.apache.zookeeper.ZooDefs.Ids
 import org.apache.zookeeper.Watcher.Event.EventType
+import org.apache.zookeeper.Watcher.Event.KeeperState
 import net.lag.logging.Logger
 import net.lag.configgy.ConfigMap
+import java.util.concurrent.CountDownLatch
 
 // Watch helpers
 class ZKWatch(watch : WatchedEvent => Unit) extends Watcher {
@@ -19,8 +21,51 @@ object ZKWatch {
   def apply(watch : WatchedEvent => Unit) = { new ZKWatch(watch) }
 }
 
-class ZooKeeperClient(val zk : ZooKeeper, basePath : String) {
+class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, watcher: Option[ZKWatch]) extends Watcher {
   private val log = Logger.get
+  private val connectionLatch = new CountDownLatch(1)
+  private var connected = false
+  private val zk = new ZooKeeper(servers, sessionTimeout, this)
+  connectionLatch.await()
+
+  def process(event : WatchedEvent) {
+    log.info("Zookeeper event: %s".format(event))
+    event.getState match {
+      case KeeperState.SyncConnected => {
+        if (!connected) {
+          connected = true
+          connectionLatch.countDown()
+        }
+      }
+      case _ =>
+    }
+    watcher.map(w => w.process(event))
+  }
+
+  def this(config: ConfigMap, watcher: Option[ZKWatch]) = {
+    this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
+         config.getInt("zookeeper-client.session-timeout", 3000),
+         config.getString("base-path", ""),
+         watcher)
+  }
+
+  def this(config: ConfigMap, watcher: ZKWatch) = {
+    this(config, Some(watcher))
+  }
+
+  def this(config: ConfigMap) = {
+    this(config, None)
+  }
+
+  def this(servers: String, watcher: Option[ZKWatch]) =
+    this(servers, 3000, "", watcher)
+
+  def this(servers: String, watcher: ZKWatch) =
+    this(servers, Some(watcher))
+
+  def this(servers: String) =
+    this(servers, None)
+
 
   /**
    * Given a string representing a path, return each subpath
@@ -32,19 +77,6 @@ class ZooKeeperClient(val zk : ZooKeeper, basePath : String) {
       (xs.firstOption.getOrElse("") + sep.toString + x)::xs}
     paths.reverse
   }
-
-  def this(servers: String, sessionTimeout: Int, basePath: String, watcher: ZKWatch) =
-    this(new ZooKeeper(servers, sessionTimeout, watcher), basePath)
-
-  def this(config: ConfigMap, watcher: ZKWatch) = {
-    this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
-         config.getInt("zookeeper-client.session-timeout", 3000),
-         config.getString("base-path", ""),
-         watcher)
-  }
-
-  def this(servers: String, watcher: ZKWatch) =
-    this(servers, 3000, "", watcher)
 
   private def makeNodePath(path : String) = "%s/%s".format(basePath, path).replaceAll("//", "/")
 
