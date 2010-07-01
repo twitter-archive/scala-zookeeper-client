@@ -38,6 +38,8 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
     watcher.map(w => w.process(event))
   }
 
+  def getHandle : ZooKeeper = zk
+
   def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZKWatch) = {
     this(servers, sessionTimeout, basePath, Some(watcher))
   }
