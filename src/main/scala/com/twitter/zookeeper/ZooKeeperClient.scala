@@ -24,7 +24,6 @@ object ZKWatch {
 class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, watcher: Option[ZKWatch]) extends Watcher {
   private val log = Logger.get
   private val connectionLatch = new CountDownLatch(1)
-  private var connected = false
   private val zk = new ZooKeeper(servers, sessionTimeout, this)
   connectionLatch.await()
 
@@ -32,10 +31,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
     log.info("Zookeeper event: %s".format(event))
     event.getState match {
       case KeeperState.SyncConnected => {
-        if (!connected) {
-          connected = true
-          connectionLatch.countDown()
-        }
+        connectionLatch.countDown()
       }
       case _ =>
     }
