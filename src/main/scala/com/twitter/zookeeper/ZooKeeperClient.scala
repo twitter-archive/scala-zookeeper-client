@@ -38,6 +38,14 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
     watcher.map(w => w.process(event))
   }
 
+  def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZKWatch) = {
+    this(servers, sessionTimeout, basePath, Some(watcher))
+  }
+
+  def this(servers: String, sessionTimeout: Int, basePath : String) = {
+    this(servers, sessionTimeout, basePath, None)
+  }
+
   def this(config: ConfigMap, watcher: Option[ZKWatch]) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
          config.getInt("zookeeper-client.session-timeout", 3000),
