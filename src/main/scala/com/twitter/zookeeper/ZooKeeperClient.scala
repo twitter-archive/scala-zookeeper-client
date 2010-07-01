@@ -2,6 +2,7 @@ package com.twitter.zookeeper
 
 import scala.collection.jcl.Conversions.{convertList, convertSet}
 import scala.collection.mutable
+import scala.collection.immutable.Set
 import org.apache.zookeeper.{CreateMode, KeeperException, Watcher, WatchedEvent, ZooKeeper}
 import org.apache.zookeeper.data.{ACL, Stat, Id}
 import org.apache.zookeeper.ZooDefs.Ids
@@ -18,7 +19,7 @@ object ZKWatch {
   def apply(watch : WatchedEvent => Unit) = { new ZKWatch(watch) }
 }
 
-class ZooKeeperClient(zk : ZooKeeper, basePath : String) {
+class ZooKeeperClient(val zk : ZooKeeper, basePath : String) {
   private val log = Logger.get
 
   /**
@@ -171,22 +172,27 @@ class ZooKeeperClient(zk : ZooKeeper, basePath : String) {
           }
           notifier.map(f => f(child))
         }
-        case None => {
-          watchMap.synchronized {
-            watchMap -= child
-          }
-          notifier.map(f => f(child))
-        }
+        case None => // deletion handled via parent watch
       }
     }
 
     def parentWatcher(children : Seq[String]) {
       val childrenSet = Set(children : _*)
-      // see which children were added
+      val watchedKeys = Set(watchMap.keySet.toSeq : _*)
+      val removedChildren = watchedKeys -- childrenSet
+      val addedChildren = childrenSet -- watchedKeys
       watchMap.synchronized {
-        for (child <- childrenSet if !watchMap.contains(child)) {
+        // remove deleted children from the watch map
+        for (child <- removedChildren) {
+          watchMap -= child
+        }
+        // add new children to the watch map
+        for (child <- addedChildren) {
           watchNode("%s/%s".format(node, child), nodeChanged(child))
         }
+      }
+      for (child <- removedChildren ++ addedChildren) {
+        notifier.map(f => f(child))
       }
     }
 
