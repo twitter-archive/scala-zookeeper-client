@@ -66,7 +66,6 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
   def this(servers: String) =
     this(servers, None)
 
-
   /**
    * Given a string representing a path, return each subpath
    * Ex. subPaths("/a/b/c", "/") == ["/a", "/a/b", "/a/b/c"]
