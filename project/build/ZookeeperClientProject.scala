@@ -11,7 +11,7 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
   val apache = "apache" at "http://people.apache.org/repo/m2-ibiblio-rsync-repository/"
 
   // dependencies
-  val specs = "org.scala-tools.testing" % "specs" % "1.6.2"
+  val specs = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test"
   val vscaladoc = "org.scala-tools" % "vscaladoc" % "1.1-md-3"
   val markdownj = "markdownj" % "markdownj" % "1.0.2b4-0.3.0"
   val slf4jApi = "org.slf4j" % "slf4j-api" % "1.5.8"

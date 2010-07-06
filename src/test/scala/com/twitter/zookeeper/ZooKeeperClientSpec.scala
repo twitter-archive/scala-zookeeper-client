@@ -8,14 +8,14 @@ import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id}
 import org.specs._
 import net.lag.configgy.Configgy
+import scala.collection.mutable
 
 class ZookeeperClientSpec extends Specification {
   "ZookeeperClient" should {
     Configgy.configure("src/main/resources/config.conf")
 
-    val watcher = ZKWatch((a: WatchedEvent) => {})
     val configMap = Configgy.config
-    val zkClient = new ZooKeeperClient(configMap, watcher)
+    val zkClient = new ZooKeeperClient(configMap, (event : WatchedEvent) => {})
 
     doBefore {
       // we need to be sure that a ZooKeeper server is running in order to test
@@ -57,5 +57,80 @@ class ZookeeperClientSpec extends Specification {
       zkClient.create("/foo", data, createMode) mustEqual "/foo"
       zkClient.delete("/foo")
     }
+
+    "watch a node" in {
+      val data: Array[Byte] = Array(0x63)
+      val node = "/datanode"
+      val createMode = EPHEMERAL
+      var watchCount = 0
+      def watcher(data : Option[Array[Byte]]) {
+        watchCount += 1
+      }
+      zkClient.create(node, data, createMode)
+      zkClient.watchNode(node, watcher)
+      Thread.sleep(50L)
+      watchCount mustEqual 1
+      zkClient.delete("/datanode")
+    }
+
+    "watch a tree of nodes" in {
+      var children : Seq[String] = List()
+      var watchCount = 0
+      def watcher(nodes : Seq[String]) {
+        watchCount += 1
+        children = nodes
+      }
+      zkClient.createPath("/tree/a")
+      zkClient.createPath("/tree/b")
+      zkClient.watchChildren("/tree", watcher)
+      children.size mustEqual 2
+      children must containAll(List("a", "b"))
+      watchCount mustEqual 1
+      zkClient.createPath("/tree/c")
+      Thread.sleep(50L)
+      children.size mustEqual 3
+      children must containAll(List("a", "b", "c"))
+      watchCount mustEqual 2
+      zkClient.delete("/tree/a")
+      Thread.sleep(50L)
+      children.size mustEqual 2
+      children must containAll(List("b", "c"))
+      watchCount mustEqual 3
+      zkClient.deleteRecursive("/tree")
+    }
+
+    "watch a tree of nodes with data" in {
+      def mkNode(node : String) {
+        zkClient.create("/root/" + node, node.getBytes, CreateMode.EPHEMERAL)
+      }
+      var children : mutable.Map[String,String] = mutable.Map()
+      var watchCount = 0
+      def notifier(child : String) {
+        watchCount += 1
+        if (children.contains(child)) {
+          children(child) mustEqual child
+        }
+      }
+      zkClient.createPath("/root")
+      mkNode("a")
+      mkNode("b")
+      zkClient.watchChildrenWithData("/root", children,
+                                     {(b : Array[Byte]) => new String(b)}, notifier)
+      children.size mustEqual 2
+      children.keySet must containAll(List("a", "b"))
+      watchCount mustEqual 2
+      mkNode("c")
+      Thread.sleep(50L)
+      children.size mustEqual 3
+      children.keySet must containAll(List("a", "b", "c"))
+      watchCount mustEqual 3
+      zkClient.delete("/root/a")
+      Thread.sleep(50L)
+      children.size mustEqual 2
+      children.keySet must containAll(List("b", "c"))
+      watchCount mustEqual 4
+      zkClient.deleteRecursive("/root")
+    }
+
   }
 }

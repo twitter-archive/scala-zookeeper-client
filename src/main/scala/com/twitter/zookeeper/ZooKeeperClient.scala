@@ -12,20 +12,16 @@ import net.lag.logging.Logger
 import net.lag.configgy.ConfigMap
 import java.util.concurrent.CountDownLatch
 
-// Watch helpers
-class ZKWatch(watch : WatchedEvent => Unit) extends Watcher {
-  override def process(event : WatchedEvent) { watch(event) }
-}
-
-object ZKWatch {
-  def apply(watch : WatchedEvent => Unit) = { new ZKWatch(watch) }
-}
-
-class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, watcher: Option[ZKWatch]) extends Watcher {
+class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, watcher: WatchedEvent => Unit) extends Watcher {
   private val log = Logger.get
   private val connectionLatch = new CountDownLatch(1)
-  private val zk = new ZooKeeper(servers, sessionTimeout, this)
-  connectionLatch.await()
+  private val zk = connect()
+
+  private def connect() = {
+    val zkClient = new ZooKeeper(servers, sessionTimeout, this)
+    connectionLatch.await()
+    zkClient
+  }
 
   def process(event : WatchedEvent) {
     log.info("Zookeeper event: %s".format(event))
@@ -35,42 +31,20 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
       }
       case _ =>
     }
-    watcher.map(w => w.process(event))
+    watcher(event)
   }
 
   def getHandle : ZooKeeper = zk
 
-  def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZKWatch) = {
-    this(servers, sessionTimeout, basePath, Some(watcher))
-  }
-
-  def this(servers: String, sessionTimeout: Int, basePath : String) = {
-    this(servers, sessionTimeout, basePath, None)
-  }
-
-  def this(config: ConfigMap, watcher: Option[ZKWatch]) = {
+  def this(config: ConfigMap, watcher: WatchedEvent => Unit) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
          config.getInt("zookeeper-client.session-timeout", 3000),
          config.getString("base-path", ""),
          watcher)
   }
 
-  def this(config: ConfigMap, watcher: ZKWatch) = {
-    this(config, Some(watcher))
-  }
-
-  def this(config: ConfigMap) = {
-    this(config, None)
-  }
-
-  def this(servers: String, watcher: Option[ZKWatch]) =
+  def this(servers: String, watcher: WatchedEvent => Unit) =
     this(servers, 3000, "", watcher)
-
-  def this(servers: String, watcher: ZKWatch) =
-    this(servers, Some(watcher))
-
-  def this(servers: String) =
-    this(servers, None)
 
   /**
    * Given a string representing a path, return each subpath
@@ -119,8 +93,23 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
     zk.getData(makeNodePath(path), false, null)
   }
 
+  def set(path: String, data: Array[Byte]) {
+    zk.setData(makeNodePath(path), data, -1)
+  }
+
   def delete(path: String) {
     zk.delete(makeNodePath(path), -1)
+  }
+
+  /**
+   * Delete a node along with all of its children
+   */
+  def deleteRecursive(path : String) {
+    val children = getChildren(path)
+    for (node <- children) {
+      deleteRecursive(path + '/' + node)
+    }
+    delete(path)
   }
 
   /**
@@ -129,6 +118,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
    * None and will track the node's re-creation with an existence watch.
    */
   def watchNode(node : String, onDataChanged : Option[Array[Byte]] => Unit) {
+    log.debug("Watching node %s", node)
     val path = makeNodePath(node)
     def updateData {
       try {
@@ -140,6 +130,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
         }
       }
     }
+
     def deletedData {
       onDataChanged(None)
       if (zk.exists(path, dataGetter) != null) {
@@ -147,13 +138,14 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
         updateData
       }
     }
-    def dataGetter : ZKWatch = ZKWatch {
-      event =>
+    def dataGetter = new Watcher {
+      def process(event : WatchedEvent) {
         if (event.getType == EventType.NodeDataChanged || event.getType == EventType.NodeCreated) {
           updateData
         } else if (event.getType == EventType.NodeDeleted) {
           deletedData
         }
+      }
     }
     updateData
   }
@@ -165,16 +157,20 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
    */
   def watchChildren(node : String, updateChildren : Seq[String] => Unit) {
     val path = makeNodePath(node)
-    val childWatcher : ZKWatch =
-      ZKWatch {event =>
+    val childWatcher = new Watcher {
+      def process(event : WatchedEvent) {
         if (event.getType == EventType.NodeChildrenChanged ||
-            event.getType == EventType.NodeCreated)
-          watchChildren(node, updateChildren)}
+            event.getType == EventType.NodeCreated) {
+          watchChildren(node, updateChildren)
+        }
+      }
+    }
     try {
       val children = zk.getChildren(path, childWatcher)
       updateChildren(children)
     } catch {
       case e:KeeperException => {
+        // Node was deleted -- fire a watch on node re-creation
         log.warning("Failed to read node %s: %s", path, e)
         updateChildren(List())
         zk.exists(path, childWatcher)
@@ -221,14 +217,17 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, w
       watchMap.synchronized {
         // remove deleted children from the watch map
         for (child <- removedChildren) {
+          log.ifDebug {"Node %s: child %s removed".format(node, child)}
           watchMap -= child
         }
         // add new children to the watch map
         for (child <- addedChildren) {
+          // node is added via nodeChanged callback
+          log.ifDebug {"Node %s: child %s added".format(node, child)}
           watchNode("%s/%s".format(node, child), nodeChanged(child))
         }
       }
-      for (child <- removedChildren ++ addedChildren) {
+      for (child <- removedChildren) {
         notifier.map(f => f(child))
       }
     }
