@@ -2,7 +2,7 @@
 
 ## About
 
-A Scala client for "Apache ZooKeeper":http://hadoop.apache.org/zookeeper/, "a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services".
+A Scala client for [Apache ZooKeeper](http://hadoop.apache.org/zookeeper/), "a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services".
 
 ZooKeeper provides a Java client library that's perfectly usable from Scala. This just wraps some idioms and niceties around that library to make it as Scala-friendly as possible. It also ships with tests, so you can have some confidence that you'll be able to interact with ZooKeeper from Scala in a predictable and reliable way.
 
@@ -103,12 +103,12 @@ Get the internal zookeeper handle to pass to other libraries:
 
 ## Authors
 
-* "John Corwin":http://github.com/jcorwin
-* "Steve Jenson":http://github.com/stevej
-* "Matt Knox":http://github.com/mattknox
-* "Ian Ownbey":http://github.com/imownbey
-* "Ryan King":http://github.com/ryanking
-* "Alex Payne":http://github.com/al3x
+* [John Corwin](http://github.com/jcorwin)
+* [Steve Jenson](http://github.com/stevej)
+* [Matt Knox](http://github.com/mattknox)
+* [Ian Ownbey](http://github.com/imownbey)
+* [Ryan King](http://github.com/ryanking)
+* [Alex Payne](http://github.com/al3x)
 
 ## License
 
