@@ -2,7 +2,7 @@ package com.twitter.zookeeper
 
 import java.net.{Socket, SocketException}
 import org.scala_tools.javautils.Imports._
-import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent}
+import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent, ZooKeeper}
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id}
@@ -15,7 +15,7 @@ class ZookeeperClientSpec extends Specification {
     Configgy.configure("src/main/resources/config.conf")
 
     val configMap = Configgy.config
-    val zkClient = new ZooKeeperClient(configMap, (event : WatchedEvent) => {})
+    val zkClient = new ZooKeeperClient(configMap, Some((zk : ZooKeeper) => {}))
 
     doBefore {
       // we need to be sure that a ZooKeeper server is running in order to test

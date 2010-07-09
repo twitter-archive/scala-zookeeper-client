@@ -10,41 +10,64 @@ import org.apache.zookeeper.Watcher.Event.EventType
 import org.apache.zookeeper.Watcher.Event.KeeperState
 import net.lag.logging.Logger
 import net.lag.configgy.ConfigMap
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.atomic.AtomicBoolean
 
-class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String, watcher: WatchedEvent => Unit) extends Watcher {
+class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
+                      watcher: Option[ZooKeeper => Unit]) {
   private val log = Logger.get
-  private val connectionLatch = new CountDownLatch(1)
-  private val zk = connect()
+  @volatile private var zk : ZooKeeper = null
+  connect()
 
-  private def connect() = {
-    val zkClient = new ZooKeeper(servers, sessionTimeout, this)
-    connectionLatch.await()
-    zkClient
-  }
+  def this(servers: String, sessionTimeout: Int, basePath : String) =
+    this(servers, sessionTimeout, basePath, None)
 
-  def process(event : WatchedEvent) {
-    log.info("Zookeeper event: %s".format(event))
-    event.getState match {
-      case KeeperState.SyncConnected => {
-        connectionLatch.countDown()
-      }
-      case _ =>
-    }
-    watcher(event)
-  }
+  def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZooKeeper => Unit) =
+    this(servers, sessionTimeout, basePath, Some(watcher))
 
-  def getHandle : ZooKeeper = zk
+  def this(servers: String) =
+    this(servers, 3000, "", None)
 
-  def this(config: ConfigMap, watcher: WatchedEvent => Unit) = {
+  def this(servers: String, watcher: ZooKeeper => Unit) =
+    this(servers, 3000, "", Some(watcher))
+
+  def this(config: ConfigMap, watcher: Option[ZooKeeper => Unit]) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
          config.getInt("zookeeper-client.session-timeout", 3000),
-         config.getString("base-path", ""),
+         config.getString("zookeeper-client.base-path", ""),
          watcher)
   }
 
-  def this(servers: String, watcher: WatchedEvent => Unit) =
-    this(servers, 3000, "", watcher)
+  /**
+   * connect() attaches to the remote zookeeper and sets an instance variable.
+   */
+  private def connect() {
+    val connectionLatch = new CountDownLatch(1)
+    val assignLatch = new CountDownLatch(1)
+    zk = new ZooKeeper(servers, sessionTimeout,
+                       new Watcher { def process(event : WatchedEvent) {
+                         sessionEvent(assignLatch, connectionLatch, event)
+                       }})
+    assignLatch.countDown()
+    log.info("Attempting to connect to zookeeper servers %s", servers)
+    connectionLatch.await()
+  }
+
+  def sessionEvent(assignLatch: CountDownLatch, connectionLatch : CountDownLatch, event : WatchedEvent) {
+    log.info("Zookeeper event: %s".format(event))
+    assignLatch.await()
+    event.getState match {
+      case KeeperState.SyncConnected => {
+        connectionLatch.countDown()
+        watcher.map(fn => fn(zk))
+      }
+      case KeeperState.Expired => {
+        // Session was expired; create a new zookeeper connection
+        connect()
+      }
+      case _ => // Disconnected -- zookeeper library will handle reconnects
+    }
+  }
 
   /**
    * Given a string representing a path, return each subpath
