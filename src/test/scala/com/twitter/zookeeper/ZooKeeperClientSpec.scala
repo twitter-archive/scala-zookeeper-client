@@ -1,6 +1,6 @@
 package com.twitter.zookeeper
 
-import java.net.{Socket, SocketException}
+import java.net.{Socket, ConnectException}
 import org.scala_tools.javautils.Imports._
 import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent, ZooKeeper}
 import org.apache.zookeeper.CreateMode._
@@ -11,17 +11,25 @@ import net.lag.configgy.Configgy
 import scala.collection.mutable
 
 class ZookeeperClientSpec extends Specification {
+  Configgy.configure("src/main/resources/config.conf")
+
+  val configMap = Configgy.config
+  val hostlist = configMap.getString("zookeeper-client.hostlist", "localhost:2181")
+
+  doBeforeSpec {
+    // we need to be sure that a ZooKeeper server is running in order to test
+    println("Testing connection to ZooKeeper server at %s...".format(hostlist))
+    val socketPort = hostlist.split(":")
+    new Socket(socketPort(0), socketPort(1).toInt) mustNot throwA[ConnectException]
+  }
+
   "ZookeeperClient" should {
-    Configgy.configure("src/main/resources/config.conf")
+    shareVariables()
+    var zkClient : ZooKeeperClient = null
 
-    val configMap = Configgy.config
-    val zkClient = new ZooKeeperClient(configMap, Some((zk : ZooKeeper) => {}))
-
-    doBefore {
-      // we need to be sure that a ZooKeeper server is running in order to test
-      val hostlist = configMap.getString("zookeeper-client.hostlist", "localhost:2181")
-      val socketPort = hostlist.split(":")
-      new Socket(socketPort(0), socketPort(1).toInt) must throwA[SocketException]
+    doFirst {
+      println("Attempting to connect to ZooKeeper server %s...".format(hostlist))
+      zkClient = new ZooKeeperClient(configMap, None)
     }
 
     doLast {
