@@ -35,7 +35,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath: String, wa
   def this(config: ConfigMap, watcher: ZKWatch) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
          config.getInt("zookeeper-client.session-timeout",  3000),
-         config.getString("base-path", ""),
+         config.getString("zookeer-client.base-path", ""),
          watcher)
   }
 
