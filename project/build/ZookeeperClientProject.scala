@@ -1,7 +1,6 @@
 import sbt._
 import Process._
-import com.twitter.sbt.{StandardProject, SubversionRepository}
-
+import com.twitter.sbt._
 
 class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
   // Maven repositories
