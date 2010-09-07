@@ -2,7 +2,10 @@ import sbt._
 import Process._
 import com.twitter.sbt._
 
-class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) {
+class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
+
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")
+
   // Maven repositories
   val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
   val jBoss = "jboss-repo" at "http://repository.jboss.org/maven2/"
