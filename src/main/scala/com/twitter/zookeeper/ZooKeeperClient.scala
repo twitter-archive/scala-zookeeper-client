@@ -58,8 +58,8 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
     assignLatch.await()
     event.getState match {
       case KeeperState.SyncConnected => {
-        connectionLatch.countDown()
         watcher.map(fn => fn(zk))
+        connectionLatch.countDown()
       }
       case KeeperState.Expired => {
         // Session was expired; create a new zookeeper connection
