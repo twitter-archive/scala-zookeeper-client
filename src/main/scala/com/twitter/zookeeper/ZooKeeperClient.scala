@@ -14,7 +14,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
-                      watcher: Option[ZooKeeper => Unit]) {
+                      watcher: Option[ZooKeeperClient => Unit]) {
   private val log = Logger.get
   @volatile private var zk : ZooKeeper = null
   connect()
@@ -22,21 +22,23 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
   def this(servers: String, sessionTimeout: Int, basePath : String) =
     this(servers, sessionTimeout, basePath, None)
 
-  def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZooKeeper => Unit) =
+  def this(servers: String, sessionTimeout: Int, basePath : String, watcher: ZooKeeperClient => Unit) =
     this(servers, sessionTimeout, basePath, Some(watcher))
 
   def this(servers: String) =
     this(servers, 3000, "", None)
 
-  def this(servers: String, watcher: ZooKeeper => Unit) =
+  def this(servers: String, watcher: ZooKeeperClient => Unit) =
     this(servers, 3000, "", Some(watcher))
 
-  def this(config: ConfigMap, watcher: Option[ZooKeeper => Unit]) = {
+  def this(config: ConfigMap, watcher: Option[ZooKeeperClient => Unit]) = {
     this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
          config.getInt("zookeeper-client.session-timeout", 3000),
          config.getString("zookeeper-client.base-path", ""),
          watcher)
   }
+
+  def getHandle() : ZooKeeper = zk
 
   /**
    * connect() attaches to the remote zookeeper and sets an instance variable.
@@ -58,7 +60,12 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
     assignLatch.await()
     event.getState match {
       case KeeperState.SyncConnected => {
-        watcher.map(fn => fn(zk))
+        try {
+          watcher.map(fn => fn(this))
+        } catch {
+          case e:Exception =>
+            log.error(e, "Exception during zookeeper connection established callback")
+        }
         connectionLatch.countDown()
       }
       case KeeperState.Expired => {
