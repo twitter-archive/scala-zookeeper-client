@@ -46,6 +46,10 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
   private def connect() {
     val connectionLatch = new CountDownLatch(1)
     val assignLatch = new CountDownLatch(1)
+    if (zk != null) {
+      zk.close()
+      zk = null
+    }
     zk = new ZooKeeper(servers, sessionTimeout,
                        new Watcher { def process(event : WatchedEvent) {
                          sessionEvent(assignLatch, connectionLatch, event)
