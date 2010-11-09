@@ -1,6 +1,6 @@
 package com.twitter.zookeeper
 
-import scala.collection.jcl.Conversions.{convertList, convertSet}
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.immutable.Set
 import org.apache.zookeeper.{CreateMode, KeeperException, Watcher, WatchedEvent, ZooKeeper}
@@ -84,10 +84,10 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
    * Given a string representing a path, return each subpath
    * Ex. subPaths("/a/b/c", "/") == ["/a", "/a/b", "/a/b/c"]
    */
-  private def subPaths(path : String, sep : Char) = {
-    val l = List.fromString(path, sep)
-    val paths = l.foldLeft[List[String]](Nil){(xs, x) =>
-      (xs.firstOption.getOrElse("") + sep.toString + x)::xs}
+  def subPaths(path : String, sep : Char) = {
+    val l = path.split(sep).toList
+    val paths = l.tail.foldLeft[List[String]](Nil){(xs, x) =>
+      (xs.headOption.getOrElse("") + sep.toString + x)::xs}
     paths.reverse
   }
 

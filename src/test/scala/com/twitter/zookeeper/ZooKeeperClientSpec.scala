@@ -1,7 +1,7 @@
 package com.twitter.zookeeper
 
 import java.net.{Socket, ConnectException}
-import org.scala_tools.javautils.Imports._
+//import org.scala_tools.javautils.Imports._
 import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent, ZooKeeper}
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
