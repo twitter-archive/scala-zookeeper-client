@@ -37,6 +37,10 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
          watcher)
   }
 
+  def this(config: ZookeeperClientConfig) ={
+    this(config, None)
+  }
+
   def getHandle() : ZooKeeper = zk
 
   /**
