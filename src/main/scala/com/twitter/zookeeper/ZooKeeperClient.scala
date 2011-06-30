@@ -112,7 +112,6 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
    * ZooKeeper version of mkdir -p
    */
   def createPath(path: String) {
-    println(path)
     for (path <- subPaths(makeNodePath(path), '/')) {
       try {
         log.debug("Creating path in createPath: %s", path)
