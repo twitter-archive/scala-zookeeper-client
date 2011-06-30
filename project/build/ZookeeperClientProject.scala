@@ -2,28 +2,17 @@ import sbt._
 import Process._
 import com.twitter.sbt._
 
-class ZookeeperClientProject(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
+class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(info) 
+  with DefaultRepos
+  with NoisyDependencies {
 
-  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public/")
-
-  // Maven repositories
-  val mavenDotOrg = "repo1" at "http://repo1.maven.org/maven2/"
-  val jBoss = "jboss-repo" at "http://repository.jboss.org/maven2/"
-  val apache = "apache" at "http://people.apache.org/repo/m2-ibiblio-rsync-repository/"
-
-  // dependencies
-  val specs = "org.scala-tools.testing" % "specs" % "1.6.2.1" % "test"
+  val sp = "org.scala-tools.testing" % "specs_2.8.0"  % "1.6.5"
   val slf4jApi = "org.slf4j" % "slf4j-api" % "1.5.8"
   val slf4jLog = "org.slf4j" % "slf4j-log4j12" % "1.5.8"
-  val log4j = "apache-log4j" % "log4j" % "1.2.15"
+  val log4j = "log4j" % "log4j" % "1.2.16"
   val commonsLogging = "commons-logging" % "commons-logging" % "1.1"
-  val configgy = "net.lag" % "configgy" % "1.4.7"
-  val javautils = "org.scala-tools" % "javautils" % "2.7.4-0.1"
-  val ostrich = "com.twitter" % "ostrich" % "1.1.6"
+  val ostrich = "com.twitter" % "ostrich" % "4.4.0"
   val zookeeper = "org.apache" % "zookeeper" % "3.3.1"
-
-  Credentials(Path.userHome / ".ivy2" / "credentials", log)
-  val publishTo = "nexus" at "http://nexus.scala-tools.org/content/repositories/releases/"
 
   override def pomExtra =
     <licenses>

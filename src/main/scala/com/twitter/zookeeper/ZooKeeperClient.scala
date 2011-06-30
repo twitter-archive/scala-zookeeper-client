@@ -1,6 +1,6 @@
 package com.twitter.zookeeper
 
-import scala.collection.jcl.Conversions.{convertList, convertSet}
+import scala.collection.JavaConversions._
 import scala.collection.mutable
 import scala.collection.immutable.Set
 import org.apache.zookeeper.{CreateMode, KeeperException, Watcher, WatchedEvent, ZooKeeper}
@@ -8,8 +8,7 @@ import org.apache.zookeeper.data.{ACL, Stat, Id}
 import org.apache.zookeeper.ZooDefs.Ids
 import org.apache.zookeeper.Watcher.Event.EventType
 import org.apache.zookeeper.Watcher.Event.KeeperState
-import net.lag.logging.Logger
-import net.lag.configgy.ConfigMap
+import com.twitter.logging.Logger
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -31,10 +30,10 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
   def this(servers: String, watcher: ZooKeeperClient => Unit) =
     this(servers, 3000, "", Some(watcher))
 
-  def this(config: ConfigMap, watcher: Option[ZooKeeperClient => Unit]) = {
-    this(config.getString("zookeeper-client.hostlist").get, // Must be set. No sensible default.
-         config.getInt("zookeeper-client.session-timeout", 3000),
-         config.getString("zookeeper-client.base-path", ""),
+  def this(config: ZookeeperClientConfig, watcher: Option[ZooKeeperClient => Unit]) = {
+    this(config.hostList,
+         config.sessionTimeout,
+         config.basePath,
          watcher)
   }
 
@@ -85,9 +84,9 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
    * Ex. subPaths("/a/b/c", "/") == ["/a", "/a/b", "/a/b/c"]
    */
   private def subPaths(path : String, sep : Char) = {
-    val l = List.fromString(path, sep)
+    val l = path.split(sep).toList.filter(s => s != "")
     val paths = l.foldLeft[List[String]](Nil){(xs, x) =>
-      (xs.firstOption.getOrElse("") + sep.toString + x)::xs}
+      (xs.headOption.getOrElse("") + sep.toString + x)::xs}
     paths.reverse
   }
 
@@ -113,6 +112,7 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
    * ZooKeeper version of mkdir -p
    */
   def createPath(path: String) {
+    println(path)
     for (path <- subPaths(makeNodePath(path), '/')) {
       try {
         log.debug("Creating path in createPath: %s", path)

@@ -3,8 +3,8 @@ package com.twitter.zookeeper.loadtest
 import java.io.File
 import org.apache.zookeeper.WatchedEvent
 //import com.twitter.jackhammer.LoggingLoadTest
-import net.lag.configgy.{Config, Configgy}
-import net.lag.logging.Logger
+// import net.lag.configgy.{Config, Configgy}
+// import net.lag.logging.Logger
 
 /*
 object LoadTest extends LoggingLoadTest {
