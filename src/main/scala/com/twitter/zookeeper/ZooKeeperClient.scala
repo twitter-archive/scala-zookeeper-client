@@ -83,9 +83,9 @@ class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
    * Given a string representing a path, return each subpath
    * Ex. subPaths("/a/b/c", "/") == ["/a", "/a/b", "/a/b/c"]
    */
-  private def subPaths(path : String, sep : Char) = {
-    val l = path.split(sep).toList.filter(s => s != "")
-    val paths = l.foldLeft[List[String]](Nil){(xs, x) =>
+  def subPaths(path : String, sep : Char) = {
+    val l = path.split(sep).toList
+    val paths = l.tail.foldLeft[List[String]](Nil){(xs, x) =>
       (xs.headOption.getOrElse("") + sep.toString + x)::xs}
     paths.reverse
   }

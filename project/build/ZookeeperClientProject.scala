@@ -12,7 +12,7 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(i
   val log4j = "log4j" % "log4j" % "1.2.16"
   val commonsLogging = "commons-logging" % "commons-logging" % "1.1"
   val ostrich = "com.twitter" % "ostrich" % "4.4.0"
-  val zookeeper = "org.apache" % "zookeeper" % "3.3.1"
+  val zookeeper = "org.apache" % "zookeeper" % "3.3.2-dev"
 
   override def pomExtra =
     <licenses>
