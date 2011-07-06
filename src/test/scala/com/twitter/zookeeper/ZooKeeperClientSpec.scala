@@ -1,20 +1,16 @@
 package com.twitter.zookeeper
 
 import java.net.{Socket, ConnectException}
-//import org.scala_tools.javautils.Imports._
 import org.apache.zookeeper.{CreateMode, Watcher, WatchedEvent, ZooKeeper}
 import org.apache.zookeeper.CreateMode._
 import org.apache.zookeeper.KeeperException.NoNodeException
 import org.apache.zookeeper.data.{ACL, Id}
 import org.specs._
-import net.lag.configgy.Configgy
 import scala.collection.mutable
 
 class ZookeeperClientSpec extends Specification {
-  Configgy.configure("src/main/resources/config.conf")
-
-  val configMap = Configgy.config
-  val hostlist = configMap.getString("zookeeper-client.hostlist", "localhost:2181")
+  val config = new TestConfig
+  val hostlist = config.hostList
 
   doBeforeSpec {
     // we need to be sure that a ZooKeeper server is running in order to test
@@ -29,7 +25,7 @@ class ZookeeperClientSpec extends Specification {
 
     doFirst {
       println("Attempting to connect to ZooKeeper server %s...".format(hostlist))
-      zkClient = new ZooKeeperClient(configMap, None)
+      zkClient = new ZooKeeperClient(config, None)
     }
 
     doLast {
