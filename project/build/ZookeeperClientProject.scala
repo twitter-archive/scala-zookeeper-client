@@ -4,7 +4,10 @@ import com.twitter.sbt._
 
 class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(info)
   with DefaultRepos
-  with NoisyDependencies {
+  with NoisyDependencies
+  with SubversionPublisher {
+
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven/")
 
   val sp = "org.scala-tools.testing" % "specs_2.8.0"  % "1.6.5"
   val ostrich = "com.twitter" % "ostrich" % "4.4.0"
