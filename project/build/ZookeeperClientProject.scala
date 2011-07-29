@@ -11,7 +11,14 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(i
 
   val sp = "org.scala-tools.testing" % "specs_2.8.0"  % "1.6.5"
   val ostrich = "com.twitter" % "ostrich" % "4.4.0"
-  val zookeeper = "org.apache" % "zookeeper" % "3.3.3"
+  val zk = "org.apache.zookeeper" % "zookeeper" % "3.3.0"
+
+  override def ivyXML =
+    <dependencies>
+      <exclude module="jms"/>
+      <exclude module="jmxtools"/>
+      <exclude module="jmxri"/>
+    </dependencies>
 
   override def pomExtra =
     <licenses>
