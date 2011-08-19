@@ -43,7 +43,7 @@ Monitor a node forever:
     zk.watchNode("/test-node", { (data : Option[Array[Byte]]) =>
       data match {
         case Some(d) => println("Data updated: %s".format(new String(d)))
-	case None => println("Node deleted")
+        case None => println("Node deleted")
       }
     })
     zk.set("/test-node", "bar".getBytes)
