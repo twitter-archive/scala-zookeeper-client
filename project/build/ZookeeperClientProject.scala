@@ -9,9 +9,9 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(i
 
   override def subversionRepository = Some("http://svn.local.twitter.com/maven/")
 
-  val sp = "org.scala-tools.testing" % "specs_2.8.0"  % "1.6.5"
-  val ostrich = "com.twitter" % "ostrich" % "4.7.3"
-  val zk = "org.apache.zookeeper" % "zookeeper" % "3.3.0"
+  val sp = "org.scala-tools.testing" % "specs_2.8.1"  % "1.6.7"
+  val ostrich = "com.twitter" % "ostrich" % "4.10.0"
+  val zk = "org.apache.zookeeper" % "zookeeper" % "3.3.3"
 
   override def ivyXML =
     <dependencies>
