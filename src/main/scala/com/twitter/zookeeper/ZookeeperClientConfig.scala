@@ -1,7 +1,14 @@
 package com.twitter.zookeeper
 
-trait ZookeeperClientConfig {
-  val hostList: String
-  val sessionTimeout: Int = 3000
-  val basePath: String = ""
+import com.twitter.ostrich.admin.RuntimeEnvironment
+import com.twitter.util.Config
+
+trait ZookeeperClientConfig extends Config[ZooKeeperClient] {
+  var hostList = required[String]
+  var sessionTimeout = 3000
+  var basePath = ""
+
+  def apply = {
+    new ZooKeeperClient(this)
+  }
 }
