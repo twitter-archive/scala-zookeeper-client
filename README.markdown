@@ -92,11 +92,11 @@ Get the internal zookeeper handle to pass to other libraries:
     import com.twitter.zookeeper.ZooKeeperClient
     import org.apache.zookeeper.ZooKeeper
 
-    def zkListener(zkHandle : ZooKeeper) {
+    def zkListener(zkClient : ZooKeeperClient) {
       // use zkHandle
-      println("Internal zookeeper handle changed: %s".format(zkHandle))
-      // Note that zkListener will be called with a new handle whenever the Zookeeper session
-      // has expired and a new connection to the Zookeeper servers is created
+      println("Internal zookeeper handle changed: %s".format(zkClient.getHandle()))
+      // Note that zkListener will be called with the same ZooKeeperClient instance
+      // whenever the Zookeeper session has expired and a new connection to the Zookeeper servers is created
     }
 
     val zk = new ZooKeeperClient("localhost:2181", zkListener _)
