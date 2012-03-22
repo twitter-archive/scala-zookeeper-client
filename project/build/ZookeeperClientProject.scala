@@ -11,7 +11,11 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(i
 
   override def subversionRepository = Some("https://svn.twitter.biz/maven/")
 
-  projectDependencies("ostrich")
+  projectDependencies(
+    "ostrich",
+    "util" ~ "util-config",
+    "util" ~ "util-logging"
+  )
 
   val sp = "org.scala-tools.testing" % "specs_2.8.1"  % "1.6.7" % "test"
   val zk = "org.apache.zookeeper" % "zookeeper" % "3.3.3"
