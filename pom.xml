@@ -1,0 +1,64 @@
+<project 
+xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.twitter</groupId>
+  <artifactId>scala-zookeeper-client</artifactId>
+  <packaging>jar</packaging>
+  <version>3.0.3-SNAPSHOT</version>
+  <parent>
+    <groupId>com.twitter</groupId>
+    <artifactId>scala-parent-private</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <relativePath>../parents/scala-parent-private/pom.xml</relativePath>
+  </parent>
+  <properties>
+    <git.dir>${project.basedir}/../.git</git.dir>
+  </properties>
+  <dependencies>
+    <!-- library dependencies -->
+    <dependency>
+      <groupId>org.apache.zookeeper</groupId>
+      <artifactId>zookeeper</artifactId>
+      <version>3.3.3</version>
+      <!-- excluded because they're not public deps  -->
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun.jdmk</groupId>
+          <artifactId>jmxtools</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.sun.jmx</groupId>
+          <artifactId>jmxri</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>javax.jms</groupId>
+          <artifactId>jms</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <!-- project dependencies -->
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>ostrich</artifactId>
+      <version>6.0.1-SNAPSHOT</version>
+    </dependency>
+    <dependency>
+      <groupId>com.twitter</groupId>
+      <artifactId>util-logging</artifactId>
+      <version>3.0.1-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.twitter</groupId>
+        <artifactId>maven-finagle-thrift-plugin</artifactId>
+        <configuration>
+          <thriftGenerators>
+            <thriftGenerator>finagle</thriftGenerator>
+          </thriftGenerators>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

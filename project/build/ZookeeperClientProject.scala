@@ -25,6 +25,7 @@ class ZookeeperClientProject(info: ProjectInfo) extends StandardLibraryProject(i
       <exclude module="jms"/>
       <exclude module="jmxtools"/>
       <exclude module="jmxri"/>
+      <override org="junit" rev="4.8.1"/>
     </dependencies>
 
   override def pomExtra =

@@ -8,7 +8,7 @@ import org.apache.zookeeper.data.{ACL, Id}
 import org.specs._
 import scala.collection.mutable
 
-class ZookeeperClientSpec extends Specification {
+class ZookeeperClientSpec extends SpecificationWithJUnit {
   val config = new TestConfig
   val hostlist = config.hostList
   //
