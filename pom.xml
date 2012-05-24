@@ -4,7 +4,7 @@
   <groupId>com.twitter</groupId>
   <artifactId>scala-zookeeper-client</artifactId>
   <packaging>jar</packaging>
-  <version>3.0.5-SNAPSHOT</version>
+  <version>3.0.5</version>
   <parent>
     <groupId>com.twitter</groupId>
     <artifactId>scala-parent-private</artifactId>
@@ -40,7 +40,7 @@
     <dependency>
       <groupId>com.twitter</groupId>
       <artifactId>ostrich</artifactId>
-      <version>7.0.4</version>
+      <version>7.0.3</version>
     </dependency>
     <dependency>
       <groupId>com.twitter</groupId>
