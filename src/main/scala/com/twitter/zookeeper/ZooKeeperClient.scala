@@ -12,6 +12,7 @@ import com.twitter.logging.Logger
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicBoolean
 
+@deprecated("scala-zookeeper-client is deprecated in favor of util-zk", "3.0.7")
 class ZooKeeperClient(servers: String, sessionTimeout: Int, basePath : String,
                       watcher: Option[ZooKeeperClient => Unit]) {
   private val log = Logger.get

@@ -1,0 +1,2 @@
+This library is deprecated. Instead use util-zk (if you want a purely async implementation) or the
+client from twitter commons.
