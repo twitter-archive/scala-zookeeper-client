@@ -1,4 +1,6 @@
-# scala-zookeeper-client
+# scala-zookeeper-client (DEPRECATED)
+
+**This project is deprecated and will not be maintained.**
 
 ## About
 
