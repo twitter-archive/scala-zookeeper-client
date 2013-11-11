@@ -2,6 +2,8 @@
 
 **This project is deprecated and will not be maintained.**
 
+See util-zk as the replacement library: http://github.com/twitter/util
+
 ## About
 
 A Scala client for [Apache ZooKeeper](http://hadoop.apache.org/zookeeper/), "a centralized service for maintaining configuration information, naming, providing distributed synchronization, and providing group services".
